@@ -153,9 +153,9 @@ const Prospector: React.FC = () => {
       }
 
       setView('results');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during lead search:', error);
-      alert('Erro ao buscar leads. Verifique sua chave de API do Google ou tente novamente.');
+      alert(error.message || 'Erro ao buscar leads. Verifique sua chave de API do Google ou tente novamente.');
     } finally {
       setIsSearching(false);
     }
