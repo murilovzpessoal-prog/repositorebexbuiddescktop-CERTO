@@ -20,7 +20,7 @@ export interface PlaceLead {
 
 export async function searchLeads(niche: string, location: string): Promise<PlaceLead[]> {
     if (!API_KEY || API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
-        throw new Error('Google Places API Key is missing or invalid.');
+        throw new Error('Chave de API do Google não encontrada na Vercel. Adicione VITE_GOOGLE_MAPS_API_KEY nas configurações.');
     }
 
     const query = `${niche} em ${location}`;
