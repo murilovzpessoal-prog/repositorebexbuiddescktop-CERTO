@@ -156,7 +156,7 @@ export function LocationMap({
             <div className="space-y-1">
               <motion.h3
                 layout
-                className="text-white font-black text-lg tracking-tight uppercase italic leading-none antialiased"
+                className="text-white font-black text-base tracking-tight uppercase italic leading-none antialiased"
                 animate={{ x: isHovered && !isExpanded ? 4 : 0 }}
               >
                 {location}
@@ -171,7 +171,7 @@ export function LocationMap({
                     exit={{ opacity: 0, x: -10 }}
                     className="space-y-6 pt-1"
                   >
-                    <p className="text-gray-400 text-[13px] font-medium italic opacity-70 leading-none">
+                    <p className="text-gray-400 text-[11px] font-medium italic opacity-70 leading-none">
                       {address}
                     </p>
 
