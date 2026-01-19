@@ -20,6 +20,7 @@ import {
 import { LocationMap } from './LocationMap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import { searchLeads, PlaceLead } from '../lib/google-places';
 
 // --- Globe Component Implementation ---
 const GLOBE_CONFIG: COBEOptions = {
@@ -127,38 +128,37 @@ const Prospector: React.FC = () => {
   const [niche, setNiche] = useState('');
   const [location, setLocation] = useState('');
   const [channel, setChannel] = useState('any');
-
-  const DUMMY_RESULTS = [
-    { location: "Famiglia Mancini Trattoria", address: "Rua Avanhandava, 81", coordinates: "23.5505° S, 46.6333° W", reviews: 27785, stars: 5, status: "ABERTO AGORA" },
-    { location: "Terraço Itália", address: "Av. Ipiranga, 344", coordinates: "23.5428° S, 46.6416° W", reviews: 13230, stars: 4, status: "ABERTO AGORA" },
-    { location: "A Figueira Rubaiyat", address: "Rua Haddock Lobo, 1738", coordinates: "23.5658° S, 46.6669° W", reviews: 10425, stars: 5, status: "ABERTO AGORA" },
-    { location: "Casarìa SP", address: "Rua Haddock Lobo, 1077", coordinates: "23.5642° S, 46.6663° W", reviews: 3236, stars: 4, status: "ABERTO AGORA" },
-    { location: "A Casa do Porco Bar", address: "Rua Araújo, 175", coordinates: "23.5452° S, 46.6457° W", reviews: 14590, stars: 5, status: "ABERTO AGORA" },
-    { location: "Praça São Lourenço", address: "Rua Casa do Ator, 608", coordinates: "23.5934° S, 46.6853° W", reviews: 6756, stars: 4, status: "FECHADO" },
-    { location: "Restaurante Capim Santo", address: "Av. Brg. Faria Lima, 2705", coordinates: "23.5652° S, 46.6713° W", reviews: 4380, stars: 4, status: "ABERTO AGORA" },
-    { location: "Fogo de Chão Moema", address: "Av. Moreira Guimarães, 964", coordinates: "23.6012° S, 46.6631° W", reviews: 30618, stars: 5, status: "ABERTO AGORA" },
-    { location: "Coco Bambu - SP Market", address: "Av. das Nações Unidas, 22540", coordinates: "23.6698° S, 46.7021° W", reviews: 24071, stars: 5, status: "ABERTO AGORA" },
-    { location: "Skye", address: "Av. Brigadeiro Luís Antônio, 4700", coordinates: "23.5857° S, 46.6665° W", reviews: 5695, stars: 5, status: "FECHADO" },
-    { location: "Arturito", address: "Rua Artur de Azevedo, 542", coordinates: "23.5652° S, 46.6835° W", reviews: 4990, stars: 4, status: "ABERTO AGORA" },
-    { location: "The View", address: "Alameda Santos, 981", coordinates: "23.5642° S, 46.6534° W", reviews: 1868, stars: 4, status: "FECHADO" },
-  ];
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<PlaceLead[]>([]);
 
   const handleSearch = async () => {
+    if (!niche || !location) return;
+
+    setIsSearching(true);
     try {
+      // Real API Search
+      const leads = await searchLeads(niche, location);
+      setResults(leads);
+
+      // Save to Supabase (Async)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('generation_history').insert({
+        supabase.from('generation_history').insert({
           user_id: user.id,
           type: 'prospector_search',
           inputs: { niche, location, strategy, rating, channel },
-          generated_content: `Busca realizada para ${niche} em ${location}`,
-          metadata: { strategy, rating, channel }
-        });
+          generated_content: `Busca realizada para ${niche} em ${location}. ${leads.length} leads encontrados.`,
+          metadata: { strategy, rating, channel, leadCount: leads.length }
+        }).then();
       }
+
+      setView('results');
     } catch (error) {
-      console.error('Error saving prospector search:', error);
+      console.error('Error during lead search:', error);
+      alert('Erro ao buscar leads. Verifique sua chave de API do Google ou tente novamente.');
+    } finally {
+      setIsSearching(false);
     }
-    setView('results');
   };
 
   if (view === 'welcome') {
@@ -341,30 +341,39 @@ const Prospector: React.FC = () => {
         <div className="w-full max-w-[1600px] mb-16 relative z-10 space-y-3">
           <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full">
             <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse shadow-[0_0_8px_#A855F7]" />
-            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest italic font-mono">SCAN_RESULTS: {DUMMY_RESULTS.length} LEADS_ENCONTRADOS</span>
+            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest italic font-mono">SCAN_RESULTS: {results.length} LEADS_ENCONTRADOS</span>
           </div>
           <h2 className="text-[48px] md:text-[64px] font-black text-white tracking-tighter leading-none italic uppercase">
             Resultados <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-indigo-400 to-blue-500 pr-4 drop-shadow-[0_0_30px_rgba(168,85,247,0.4)]">da Busca</span>
           </h2>
         </div>
 
-        <motion.div
-          layout
-          className="w-full max-w-[1600px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 items-start relative z-10"
-        >
-          {DUMMY_RESULTS.map((res, idx) => (
-            <LocationMap
-              key={idx}
-              location={res.location}
-              address={res.address}
-              coordinates={res.coordinates}
-              reviews={res.reviews}
-              stars={res.stars}
-              status={res.status}
-              className="w-full"
-            />
-          ))}
-        </motion.div>
+        {results.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-40 space-y-6">
+            <div className="w-20 h-20 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center text-gray-700">
+              <Search size={40} />
+            </div>
+            <p className="text-gray-500 font-bold tracking-widest uppercase italic text-xs">Nenhum lead encontrado para os critérios selecionados.</p>
+          </div>
+        ) : (
+          <motion.div
+            layout
+            className="w-full max-w-[1600px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12 items-start relative z-10"
+          >
+            {results.map((res, idx) => (
+              <LocationMap
+                key={idx}
+                location={res.location}
+                address={res.address}
+                coordinates={res.coordinates}
+                reviews={res.reviews}
+                stars={res.stars}
+                status={res.status}
+                className="w-full"
+              />
+            ))}
+          </motion.div>
+        )}
 
         <div className="mt-40 opacity-20 flex items-center gap-4">
           <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
@@ -497,8 +506,8 @@ const Prospector: React.FC = () => {
                 <button
                   onClick={() => setStrategy('all')}
                   className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${strategy === 'all'
-                      ? 'bg-purple-500/10 border-purple-500/40'
-                      : 'bg-white/[0.02] border-white/5 hover:border-white/10'
+                    ? 'bg-purple-500/10 border-purple-500/40'
+                    : 'bg-white/[0.02] border-white/5 hover:border-white/10'
                     }`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${strategy === 'all' ? 'text-purple-400 bg-purple-400/10' : 'text-gray-600 bg-white/5'}`}>
@@ -513,8 +522,8 @@ const Prospector: React.FC = () => {
                 <button
                   onClick={() => setStrategy('nosite')}
                   className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left relative overflow-hidden ${strategy === 'nosite'
-                      ? 'bg-purple-500/10 border-purple-500/40'
-                      : 'bg-white/[0.02] border-white/5 hover:border-white/10'
+                    ? 'bg-purple-500/10 border-purple-500/40'
+                    : 'bg-white/[0.02] border-white/5 hover:border-white/10'
                     }`}
                 >
                   <div className="absolute top-3 right-3 px-1.5 py-0.5 bg-purple-500 text-white text-[7px] font-black rounded tracking-widest">Recomendado</div>
@@ -567,10 +576,20 @@ const Prospector: React.FC = () => {
           <div className="pt-6 flex justify-center">
             <button
               onClick={handleSearch}
-              className="group relative px-12 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-[24px] font-black text-[12px] uppercase tracking-[0.4em] italic shadow-[0_15px_40px_-8px_rgba(124,58,237,0.5)] hover:scale-105 active:scale-95 transition-all duration-700 overflow-hidden flex items-center justify-center gap-4 border border-white/20"
+              disabled={isSearching || !niche || !location}
+              className={`group relative px-12 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-[24px] font-black text-[12px] uppercase tracking-[0.4em] italic shadow-[0_15px_40px_-8px_rgba(124,58,237,0.5)] hover:scale-105 active:scale-95 transition-all duration-700 overflow-hidden flex items-center justify-center gap-4 border border-white/20 ${isSearching ? 'opacity-70 cursor-wait' : ''}`}
             >
-              <Search size={18} strokeWidth={3} />
-              <span>Buscar Leads</span>
+              {isSearching ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Sincronizando...</span>
+                </>
+              ) : (
+                <>
+                  <Search size={18} strokeWidth={3} />
+                  <span>Buscar Leads</span>
+                </>
+              )}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             </button>
           </div>
