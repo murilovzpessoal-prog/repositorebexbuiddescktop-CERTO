@@ -11,6 +11,9 @@ interface LocationMapProps {
   status?: string
   reviews?: number
   stars?: number
+  phone?: string
+  website?: string
+  mapsUri?: string
 }
 
 export function LocationMap({
@@ -20,6 +23,9 @@ export function LocationMap({
   status = "ABERTO AGORA",
   reviews = 27785,
   stars = 5,
+  phone,
+  website,
+  mapsUri,
   className,
 }: LocationMapProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -102,7 +108,7 @@ export function LocationMap({
               <div className="absolute top-[20%] left-[35%] w-12 h-14 bg-white/[0.03] border border-white/5 rounded-lg" />
               <div className="absolute top-[45%] left-[10%] w-16 h-20 bg-white/[0.03] border border-white/5 rounded-lg" />
               <div className="absolute bottom-[10%] right-[10%] w-20 h-20 bg-white/[0.03] border border-white/5 rounded-lg" />
-              
+
               {/* Large Central Pin with Purple Glow */}
               <motion.div
                 className="absolute top-[55%] left-[55%] -translate-x-1/2 -translate-y-1/2"
@@ -130,9 +136,9 @@ export function LocationMap({
                 </motion.svg>
               </motion.div>
               {isExpanded && (
-                 <motion.svg initial={{ opacity: 0 }} animate={{ opacity: 1 }} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
-                   <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-                 </motion.svg>
+                <motion.svg initial={{ opacity: 0 }} animate={{ opacity: 1 }} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
+                  <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                </motion.svg>
               )}
             </div>
 
@@ -148,8 +154,8 @@ export function LocationMap({
           {/* Bottom Information Section */}
           <div className="space-y-4">
             <div className="space-y-1">
-              <motion.h3 
-                layout 
+              <motion.h3
+                layout
                 className="text-white font-black text-lg tracking-tight uppercase italic leading-none antialiased"
                 animate={{ x: isHovered && !isExpanded ? 4 : 0 }}
               >
@@ -168,20 +174,46 @@ export function LocationMap({
                     <p className="text-gray-400 text-[13px] font-medium italic opacity-70 leading-none">
                       {address}
                     </p>
-                    
+
                     {/* Social Buttons (Circular as per image) */}
                     <div className="flex items-center gap-3 pt-1">
-                      {[Instagram, Phone, Mail, MapPin].map((Icon, i) => (
-                        <div key={i} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-xl backdrop-blur-sm">
-                          <Icon size={16} />
-                        </div>
-                      ))}
+                      {/* Instagram Button - Using Website as fallback/primary for now if no specific IG field */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if (website) window.open(website, '_blank'); }}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-xl backdrop-blur-sm"
+                      >
+                        <Instagram size={16} />
+                      </button>
+
+                      {/* Phone Button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if (phone) window.location.href = `tel:${phone}`; }}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-xl backdrop-blur-sm"
+                      >
+                        <Phone size={16} />
+                      </button>
+
+                      {/* Mail Button - Default fallback as Google doesn't easily provide email */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); }}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-xl backdrop-blur-sm"
+                      >
+                        <Mail size={16} />
+                      </button>
+
+                      {/* MapPin Button (Google Maps) */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if (mapsUri) window.open(mapsUri, '_blank'); }}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-xl backdrop-blur-sm"
+                      >
+                        <MapPin size={16} />
+                      </button>
                     </div>
                   </motion.div>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     key="collapsed-meta"
-                    initial={{ opacity: 0 }} 
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="flex items-center gap-1 mb-1"
                   >
@@ -195,15 +227,15 @@ export function LocationMap({
             </div>
 
             <motion.div layout className="h-[2px] bg-gradient-to-r from-purple-500/80 via-purple-400/20 to-transparent w-full" />
-            
+
             <motion.p layout className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-1" animate={{ opacity: isExpanded ? 0.3 : 0.6 }}>
-               {isExpanded ? 'DETALHAMENTO_IA_PRO_OK' : 'Clique para ver mais detalhes'}
+              {isExpanded ? 'DETALHAMENTO_IA_PRO_OK' : 'Clique para ver mais detalhes'}
             </motion.p>
           </div>
         </div>
 
         {/* Aesthetic Reflection Sweep */}
-        <motion.div 
+        <motion.div
           className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-transparent pointer-events-none"
           animate={{ x: isHovered ? ['-100%', '100%'] : '-100%' }}
           transition={{ duration: 1.5, ease: "easeInOut" }}
@@ -212,11 +244,11 @@ export function LocationMap({
 
       <AnimatePresence>
         {isHovered && !isExpanded && (
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute -bottom-6 left-1/2 text-[9px] font-black text-gray-800 uppercase tracking-[0.4em] whitespace-nowrap" 
+            className="absolute -bottom-6 left-1/2 text-[9px] font-black text-gray-800 uppercase tracking-[0.4em] whitespace-nowrap"
             style={{ x: "-50%" }}
           >
             Clique para expandir

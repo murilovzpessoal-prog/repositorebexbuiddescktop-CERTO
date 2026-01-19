@@ -13,6 +13,9 @@ export interface PlaceLead {
     reviews: number;
     stars: number;
     status: string;
+    phone?: string;
+    website?: string;
+    mapsUri?: string;
 }
 
 export async function searchLeads(niche: string, location: string): Promise<PlaceLead[]> {
@@ -28,7 +31,7 @@ export async function searchLeads(niche: string, location: string): Promise<Plac
             headers: {
                 'Content-Type': 'application/json',
                 'X-Goog-Api-Key': API_KEY,
-                'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location'
+                'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location,places.websiteUri,places.internationalPhoneNumber,places.googleMapsUri'
             },
             body: JSON.stringify({
                 textQuery: query,
@@ -52,7 +55,10 @@ export async function searchLeads(niche: string, location: string): Promise<Plac
                 : 'Coordenadas não disponíveis',
             reviews: place.userRatingCount || 0,
             stars: Math.floor(place.rating || 0),
-            status: place.currentOpeningHours?.openNow ? "ABERTO AGORA" : "FECHADO"
+            status: place.currentOpeningHours?.openNow ? "ABERTO AGORA" : "FECHADO",
+            phone: place.internationalPhoneNumber,
+            website: place.websiteUri,
+            mapsUri: place.googleMapsUri
         }));
     } catch (error) {
         console.error('Error searching Google Places:', error);

@@ -363,12 +363,7 @@ const Prospector: React.FC = () => {
             {results.map((res, idx) => (
               <LocationMap
                 key={idx}
-                location={res.location}
-                address={res.address}
-                coordinates={res.coordinates}
-                reviews={res.reviews}
-                stars={res.stars}
-                status={res.status}
+                {...res}
                 className="w-full"
               />
             ))}
