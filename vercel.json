@@ -1,6 +1,14 @@
 {
     "rewrites": [
         {
+            "source": "/app",
+            "destination": "https://repositoremobile.vercel.app/"
+        },
+        {
+            "source": "/app/(.*)",
+            "destination": "https://repositoremobile.vercel.app/$1"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
